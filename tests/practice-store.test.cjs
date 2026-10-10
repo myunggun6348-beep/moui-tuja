@@ -1,0 +1,13 @@
+const vm=require('node:vm'),fs=require('node:fs'),assert=require('node:assert/strict');
+let saved=null,failWrite=false;
+const context={window:{dispatchEvent(){},addEventListener(){}},localStorage:{getItem(){return saved;},setItem(k,v){if(failWrite)throw Error('quota');saved=v;}},navigator:{locks:{request:(name,fn)=>fn()}},crypto:require('node:crypto'),Event:class{}};
+vm.createContext(context);vm.runInContext(fs.readFileSync('prototypes/store.js','utf8'),context);const store=context.window.DemoStore;
+(async()=>{let state=store.read();assert.equal(store.total(state),10245000);
+ state=await store.execute({index:0,q:1,side:'buy'},0);assert.equal(state.cash,4364987);assert.equal(state.holdings[0].quantity,21);assert.equal(store.read().revision,1);assert.equal(store.total(state),10244987);
+ await assert.rejects(()=>store.execute({index:0,q:1,side:'buy'},0),/다른 화면/);
+ state=await store.execute({index:0,q:1,side:'sell'},1);assert.equal(state.cash,4449821);assert.equal(state.holdings[0].quantity,20);assert.equal(state.orders[1].tax,153);assert.equal(state.orders[1].fee,13);
+ assert.match(store.check(state,0,100,'buy'),/현금이 부족/);assert.match(store.check(state,0,17,'buy'),/투자 한도/);assert.match(store.check(state,0,21,'sell'),/보유 수량/);assert.match(store.check(state,0,1.5,'buy'),/유효한 수량/);
+ const before=saved;failWrite=true;await assert.rejects(()=>store.execute({index:0,q:1,side:'buy'},2),/저장하지 못해/);assert.equal(saved,before);failWrite=false;
+ saved='invalid json';assert.throws(()=>store.read(),/덮어쓰지/);assert.equal(saved,'invalid json');
+ console.log('PASS: persisted buy/sell, totals, stale revision, limits, write failure and damaged storage');
+})().catch(e=>{console.error(e);process.exitCode=1;});

@@ -1,0 +1,48 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const { PGlite } = require('@electric-sql/pglite');
+(async () => {
+  const db = new PGlite();
+  await db.exec(`create role anon; create role authenticated;
+    create schema auth; create table auth.users(id uuid primary key);
+    create function auth.uid() returns uuid language sql stable as
+      $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
+    grant usage on schema auth to authenticated, anon;
+    grant execute on function auth.uid() to authenticated, anon;`);
+  await db.exec(fs.readFileSync('database/schema.sql','utf8'));
+  const first = '00000000-0000-0000-0000-000000000001', second = '00000000-0000-0000-0000-000000000002';
+  await db.query('insert into auth.users values($1),($2)',[first,second]);
+  await db.exec('set role authenticated');
+  const login = id=>db.query("select set_config('request.jwt.claim.sub',$1,false)",[id]);
+  const account = async()=> (await db.query('select public.get_practice_account() as state')).rows[0].state;
+  const trade = async(q,side,revision,id,stock=0)=> (await db.query(
+    'select public.place_practice_order($1,$2,$3,$4,$5) as state',[stock,q,side,revision,id])).rows[0].state;
+  const id1 = '10000000-0000-0000-0000-000000000001', id2 = '10000000-0000-0000-0000-000000000002';
+  await login(first);
+  assert.equal((await account()).cash,10000000);
+  let state=await trade(1,'buy',0,id1);
+  assert.equal(state.cash,9914987); assert.equal(state.holdings[0].quantity,1); assert.equal(state.revision,1);
+  state=await trade(1,'buy',0,id1); assert.equal(state.revision,1); assert.equal(state.orders.length,1);
+  await assert.rejects(trade(2,'buy',1,id1),/request_conflict/);
+  await assert.rejects(trade(1,'buy',0,id2),/stale_revision/);
+  await assert.rejects(trade(10000,'buy',1,id2),/insufficient_cash/);
+  await assert.rejects(trade(35,'buy',1,id2),/holding_limit/);
+  await assert.rejects(trade(2,'sell',1,id2),/insufficient_quantity/);
+  await assert.rejects(trade(0,'buy',1,id2),/invalid_order/);
+  assert.equal((await account()).revision,1);
+  state=await trade(1,'sell',1,id2);
+  assert.equal(state.cash,9999821); assert.equal(state.orders[1].tax,153);
+  assert.equal(state.holdings[0].quantity,0); assert.equal(state.holdings[0].average,0);
+  await assert.rejects(db.exec('update public.practice_accounts set cash=999999999'),/permission denied/);
+  await login(second); state=await account();
+  assert.equal(state.cash,10000000); assert.equal(state.orders.length,0);
+  const visible=await db.query('select user_id from public.practice_accounts');
+  assert.equal(visible.rows.length,1); assert.equal(visible.rows[0].user_id,second);
+  assert.equal((await db.query('select count(*)::int as n from public.practice_orders')).rows[0].n,0);
+  await login(first); assert.equal((await account()).orders.length,2);
+  await login(''); await assert.rejects(account(),/login_required/);
+  await db.exec('reset role; set role anon');
+  await assert.rejects(account(),/permission denied/);
+  await db.close();
+  console.log('PASS: PostgreSQL buy/sell, fee/tax, idempotency, stale revision, limits, RLS account isolation and denied direct writes');
+})().catch(e=>{console.error(e);process.exitCode=1;});
