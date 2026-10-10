@@ -1,4 +1,6 @@
 const $=id=>document.getElementById(id),money=n=>Math.round(n).toLocaleString('ko-KR')+'원';
+const requestedStock = new URLSearchParams(location.search).get('stock');
+if (/^[0-2]$/.test(requestedStock || '')) $('stock').value = requestedStock;
 let account=DemoStore.initial(),side='buy',pending=null,processing=false,storageError='연습 기록을 불러오는 중입니다.';
 function refresh(){try{account=DemoStore.read();storageError='';}catch(e){storageError=e.message;}if($('confirm').open){$('confirm').close();pending=null;}render();renderHistory();if(storageError)$('result').textContent=storageError;}
 function totals(stock,q){return DemoStore.quote(account,account.holdings.indexOf(stock),q,side);}

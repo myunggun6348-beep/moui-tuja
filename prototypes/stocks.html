@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>종목 찾기 · 모의투자</title><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="dashboard.css"><link rel="stylesheet" href="stocks.css"></head><body>
+<main class="dashboard stocks"><header class="top"><a class="brand" href="dashboard.html">← 내 투자 현황</a><nav aria-label="주요 메뉴"><a href="trade.html">매수·매도</a><a href="orders.html">주문내역</a></nav></header>
+<p class="demo">가상 종목 3개와 고정된 예시 가격으로 연습합니다.</p>
+<div class="stocks-heading"><p class="eyebrow">종목 탐색</p><h1>찾고, 담고, 연습하세요</h1><p>관심 있는 종목은 별표로 모아두세요.</p></div>
+<section class="card search-card" aria-label="종목 검색과 필터"><label for="search">종목 이름 또는 연습 코드</label><div class="search-row"><input type="search" id="search" placeholder="예: 가상 종목 A 또는 DEMO-A" autocomplete="off" aria-controls="stock-list"><button id="clear-search" type="button" class="outline" hidden>지우기</button></div>
+<div class="stock-filters" role="group" aria-label="표시할 종목"><button id="all-stocks" type="button" aria-pressed="true">전체 종목 <span>3</span></button><button id="favorite-stocks" type="button" aria-pressed="false">★ 관심종목 <span id="favorite-count">—</span></button></div><p id="watchlist-note" class="hint">관심종목 저장 위치를 확인하는 중입니다.</p></section>
+<div class="list-heading"><h2 id="list-title">전체 종목</h2><p id="result-count" role="status">불러오는 중…</p></div>
+<div class="save-message"><p id="watchlist-status" role="status"></p><button id="retry-watchlist" type="button" class="outline" hidden>다시 불러오기</button></div>
+<ul id="stock-list" class="stock-list" aria-labelledby="list-title"></ul>
+<section id="stocks-empty" class="card empty-state" hidden><h2 id="empty-title"></h2><p id="empty-description"></p><button id="reset-filters" class="outline" type="button">전체 종목 보기</button></section>
+<p class="notice">실제 기업이나 실시간 시세가 아닙니다. 관심종목을 저장해도 주문은 실행되지 않습니다.</p></main>
+<script src="store.js"></script><script src="auth.js"></script><script src="account-store.js"></script><script src="watchlist-store.js"></script><script src="stocks.js"></script></body></html>
