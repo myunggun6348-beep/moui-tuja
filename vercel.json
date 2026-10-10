@@ -5,9 +5,40 @@
   "installCommand": "",
   "outputDirectory": "prototypes",
   "redirects": [
-    { "source": "/", "destination": "/dashboard.html", "permanent": false },
-    { "source": "/login", "destination": "/login.html", "permanent": false },
-    { "source": "/help", "destination": "/help.html", "permanent": false },
-    { "source": "/dashboard", "destination": "/dashboard.html", "permanent": false }
+    {
+      "source": "/",
+      "destination": "/dashboard.html",
+      "permanent": false
+    },
+    {
+      "source": "/login",
+      "destination": "/login.html",
+      "permanent": false
+    },
+    {
+      "source": "/help",
+      "destination": "/help.html",
+      "permanent": false
+    },
+    {
+      "source": "/dashboard",
+      "destination": "/dashboard.html",
+      "permanent": false
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "value": "no-referrer",
+          "key": "Referrer-Policy"
+        },
+        {
+          "value": "nosniff",
+          "key": "X-Content-Type-Options"
+        }
+      ]
+    }
   ]
 }

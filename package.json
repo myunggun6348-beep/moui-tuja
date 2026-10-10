@@ -1,0 +1,11 @@
+{
+  "name": "moui-tuja-practice",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "test": "node tests/practice-store.test.cjs && node tests/account-auth.test.cjs && node tests/account-database.test.cjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.8"
+  }
+}
