@@ -1,5 +1,14 @@
 window.AccountAuth = (() => {
   const sessionKey = 'moui-tuja.account.session.v1';
+  const verifierKey = 'moui-tuja.email.pkce.v1';
+  const returnUrl = new URL(location.href);
+  const returnCode = returnUrl.searchParams.get('code');
+  const returnError = returnUrl.searchParams.get('error');
+  if (returnCode || returnError) {
+    returnUrl.searchParams.delete('code'); returnUrl.searchParams.delete('error');
+    returnUrl.searchParams.delete('error_code'); returnUrl.searchParams.delete('error_description');
+    history.replaceState(null, '', returnUrl.pathname + returnUrl.search);
+  }
   let config, session, refreshPromise;
   const configuration = fetch('/api/public-config', { cache: 'no-store' })
     .then(async r => { if (!r.ok) throw Error(); return r.json(); })
@@ -57,6 +66,31 @@ window.AccountAuth = (() => {
     catch (e) { if ([401, 403].includes(e.status)) clear(); throw e; }
   }
   async function sendCode(email) { return request('otp', { email, create_user: true }); }
+  async function sendLink(email) {
+    const bytes = crypto.getRandomValues(new Uint8Array(32));
+    const verifier = Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
+    const challenge = btoa(String.fromCharCode(...new Uint8Array(digest))).replaceAll('+','-').replaceAll('/','_').replaceAll('=','');
+    // Temporary proof for opening the link in another tab of the same browser.
+    localStorage.setItem(verifierKey, JSON.stringify({ verifier, deadline:Date.now()+3600000 }));
+    try { return await request('otp?redirect_to='+encodeURIComponent(location.origin+'/login.html'),
+      { email, create_user:true, code_challenge:challenge, code_challenge_method:'s256' }); }
+    catch(e) { localStorage.removeItem(verifierKey); throw e; }
+  }
+  async function completeLink() {
+    if (returnError) throw Error('로그인 링크가 만료되었거나 유효하지 않습니다. 새 메일을 받아주세요.');
+    if (!returnCode) return false;
+    let proof;
+    try { proof = JSON.parse(localStorage.getItem(verifierKey)); } catch {}
+    if (!proof?.verifier || !Number.isFinite(proof.deadline) || proof.deadline<Date.now()) {
+      throw Error('메일을 요청한 브라우저에서 링크를 열어주세요. 이 브라우저에서 새 메일을 받아도 됩니다.');
+    }
+    const result = await request('token?grant_type=pkce', { auth_code:returnCode, code_verifier:proof.verifier });
+    if (!result.access_token || !result.refresh_token) throw Error('로그인을 완료하지 못했습니다.');
+    try { save(result); sessionStorage.setItem('moui-tuja.mode','account'); localStorage.removeItem(verifierKey); }
+    catch { clear(); throw Error('로그인 정보를 유지할 수 없습니다. 브라우저 저장 권한을 확인하세요.'); }
+    return true;
+  }
   async function verify(email, code) {
     const result = await request('verify', { email, token: code, type: 'email' });
     if (!result.access_token || !result.refresh_token) throw Error('로그인을 완료하지 못했습니다.');
@@ -67,5 +101,5 @@ window.AccountAuth = (() => {
     try { await request('logout?scope=local', null, await token()); }
     finally { clear(); sessionStorage.removeItem('moui-tuja.mode'); location.assign('login.html'); }
   }
-  return { configuration, token, user, sendCode, verify, logout, clear };
+  return { configuration, token, user, sendCode, sendLink, completeLink, verify, logout, clear };
 })();

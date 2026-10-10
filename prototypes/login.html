@@ -1,8 +1,9 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>이메일 로그인 · 모의투자</title><link rel="stylesheet" href="style.css"></head>
 <body><main class="login"><header><div class="logo" aria-hidden="true">↗</div><h1>모의투자</h1><p>이메일로 인증하고 내 투자 연습을 이어가세요.</p></header>
-<section class="card"><form id="login-form"><label for="email">이메일</label><input id="email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="name@example.com" required maxlength="254"><p class="hint">비밀번호 대신 이메일로 받은 인증 코드를 사용합니다.</p><button class="primary" id="send-code" type="submit" disabled>인증 메일 받기</button></form>
-<form id="code-form" hidden><p id="sent-to" class="hint"></p><label for="code">이메일 인증 코드</label><input id="code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required placeholder="6자리 숫자"><button id="verify-code" class="primary" type="submit">인증하고 시작하기</button></form>
+<section class="card"><form id="login-form"><label for="email">이메일</label><input id="email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="name@example.com" required maxlength="254"><p class="hint">비밀번호 없이 이메일의 로그인 링크를 눌러 인증합니다.</p><button class="primary" id="send-code" type="submit" disabled>로그인 메일 받기</button></form>
+
 <p id="status" role="status" class="status"></p><div class="secondary"><button type="button" id="demo-start">로그인 없이 화면 연습하기</button><a href="help.html">이용 방법 보기 →</a></div></section>
-<p class="notice">계정 로그인은 새 이메일 계정으로 시작합니다.<br>기존 닉네임·PIN 계정과 브라우저 연습 기록은 자동으로 옮겨지지 않습니다.</p></main>
+<p class="notice">계정 로그인은 새 이메일 계정으로 시작합니다.<br>기존 닉네임·PIN 계정과 브라우저 연습 기록은 자동으로 옮겨지지 않습니다.<br>현재 기본 메일 발송은 관리자 테스트 주소로 제한됩니다.</p></main>
 <script src="auth.js"></script><script src="login.js"></script></body></html>
+
