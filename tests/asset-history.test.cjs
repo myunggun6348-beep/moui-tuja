@@ -1,0 +1,12 @@
+const assert = require('node:assert/strict'), fs = require('node:fs'), vm = require('node:vm');
+const context = { window: {} }; vm.createContext(context); vm.runInContext(fs.readFileSync('prototypes/asset-history.js','utf8'), context);
+const build = context.window.AssetHistory.build, now = new Date('2026-10-10T12:00:00Z');
+const state = {cash:9999821, holdings:[], orders:[{fee:13,tax:0,at:'2026-10-09T14:50:00Z'},{fee:13,tax:153,at:'2026-10-09T15:10:00Z'}]};
+let result = build(state,'all',now);
+assert.equal(result.points[0].value,10000000); assert.equal(result.points[1].date,'2026-10-09'); assert.equal(result.points[1].value,9999987); assert.equal(result.points[2].date,'2026-10-10'); assert.equal(result.points.at(-1).value,9999821); assert.equal(result.change,-179);
+result = build({cash:9914987,holdings:[{quantity:1,price:85000}],orders:[{fee:13,tax:0,at:'2026-09-01T12:00:00Z'}]},'7',now);
+assert.equal(result.change,0); assert.equal(result.points[0].value,9999987); assert.equal(result.points.at(-1).date,'2026-10-10');
+result = build({cash:10000000,holdings:[],orders:[]},'all',now); assert.equal(result.orders,0); assert.equal(result.points.length,1);
+result = build({cash:4449987,holdings:[{quantity:20,price:85000},{quantity:5,price:315000},{quantity:10,price:252000}],orders:[{fee:13,tax:0,at:'2026-10-10T01:00:00Z'}]},'all',now); assert.equal(result.points[0].value,10245000);
+assert.throws(()=>build({...state,orders:[{fee:NaN,tax:0,at:'bad'}]},'all',now),/자산 기록/);
+console.log('PASS: asset history totals, fee/tax, Seoul dates, period baseline, empty account and demo initial value');
