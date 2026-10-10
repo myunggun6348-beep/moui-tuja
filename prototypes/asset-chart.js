@@ -28,7 +28,8 @@ window.AssetChart = (() => {
       byId('chart-latest').textContent = won(points.at(-1).value);
       byId('chart-change').textContent = (history.change > 0 ? '+' : history.change < 0 ? '−' : '') + won(Math.abs(history.change));
       const svg = byId('asset-chart'); svg.replaceChildren();
-      const width = 640, left = 92, right = 616, top = 24, bottom = 192;
+      const width = Math.max(300, Math.min(640, svg.clientWidth || 640)), left = 92, right = width - 24, top = 24, bottom = 192;
+      svg.setAttribute('viewBox', '0 0 ' + width + ' 240');
       const values = points.map(point => point.value), min = Math.min(...values), max = Math.max(...values), padding = Math.max(100, (max - min) * .25), low = Math.max(0, min - padding), high = max + padding;
       const x = i => points.length === 1 ? (left + right) / 2 : left + i / (points.length - 1) * (right - left);
       const y = value => bottom - (value - low) / (high - low) * (bottom - top);
@@ -61,5 +62,6 @@ window.AssetChart = (() => {
   }));
   byId('chart-previous').addEventListener('click', () => detail(Math.max(0, selected - 1)));
   byId('chart-next').addEventListener('click', () => detail(Math.min(points.length - 1, selected + 1)));
+  window.addEventListener('resize', draw);
   return { render, privacy };
 })();
